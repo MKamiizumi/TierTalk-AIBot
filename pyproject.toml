@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "english-chat-ai"
+version = "0.1.0"
+description = "An English AI Chatbot built to enhance English learning for various users."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+langchain = "^0.2.14"
+google-cloud-speech = "^2.27.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

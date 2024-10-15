@@ -1,0 +1,6 @@
+[gerrit]
+host=gerrit.circlecat.org
+port=80
+scheme=http
+project=english-chat-ai
+defaultbranch=main
