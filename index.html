@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recording</title>
+</head>
+<body>
+    <h1>Record Audio</h1>
+
+    <!-- 添加用户选择的级别 -->
+    <label for="level">Select Level:</label>
+    <select id="level">
+        <option value="cet4">CET4</option>
+        <option value="cet6">CET6</option>
+        <option value="junior">Junior</option>
+        <option value="sat">SAT</option>
+        <option value="senior">Senior</option>
+        <option value="toefl">TOEFL</option>
+    </select>
+
+    <br><br>
+
+    <button id="start-recording">Start Recording</button>
+    <button id="stop-recording" disabled>Stop Recording</button>
+    <a id="download-link" style="display:none">Download Audio</a>
+    <p id="status"></p>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('start-recording').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                console.log("Audio Blob Type:", audioBlob.type);
+                console.log("Audio Blob Size:", audioBlob.size);
+
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // 下载链接的代码
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.href = audioUrl;
+                downloadLink.download = 'recording.wav';
+                downloadLink.style.display = 'block';
+                downloadLink.innerText = 'Download Audio';
+
+                // new_获取用户选择的级别
+                const userLevel = document.getElementById('level').value;
+
+                // 上传音频到后端以进行转录
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'recording.wav');
+                for (var pair of formData.entries()) {
+                    console.log(pair[0]+ ', ' + pair[1]); 
+                }
+                console.log("FormData:", formData.get('file'));
+
+                formData.append('level', userLevel);  // 将用户选择的级别添加到 FormData
+
+                document.getElementById('status').textContent = 'Uploading...';
+                const response = await fetch('/upload-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log("Response Status:", response.status);
+
+                const result = await response.json(); // 从服务器（？）获取转录文本
+                console.log("Transcription Result:", result);
+                document.getElementById('status').textContent = result.transcript || 'Done'; // 这一句是把转录文本显示在页面上
+            };
+
+            audioChunks = [];
+            mediaRecorder.start();
+            document.getElementById('start-recording').disabled = true;
+            document.getElementById('stop-recording').disabled = false;
+        });
+
+        document.getElementById('stop-recording').addEventListener('click', () => {
+            mediaRecorder.stop();
+            document.getElementById('start-recording').disabled = false;
+            document.getElementById('stop-recording').disabled = true;
+        });
+    </script>
+</body>
+</html>
